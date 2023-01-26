@@ -1,0 +1,75 @@
+name: Actions
+
+on:
+  pull_request:
+  push:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  run_tests:
+    name: Test Python
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.10", "3.9", "3.8", "3.7"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/checkout@v3
+      - run: pip install ".[test,ci]"
+      - run: mypy src/ tests/
+      - run: black --check src/ tests/
+      - run: isort -c src/ tests/
+      - run: pytest tests/
+
+  build_sdist:
+    name: Build source distribution
+    needs: [run_tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: pipx run build --sdist --outdir=dist/ .
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/*.tar.gz
+
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [run_tests]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # change to macos-latest after: https://github.com/actions/runner-images/issues/6384
+        os: [ubuntu-latest, windows-latest, macos-12]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - uses: pypa/cibuildwheel@v2.12.0
+        with:
+          output-dir: dist
+          config-file: pyproject.toml
+      - run: pipx run twine check dist/*
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/*.whl
+
+  publish_pypi:
+    needs: [build_sdist, build_wheels]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@v1.6.4
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}

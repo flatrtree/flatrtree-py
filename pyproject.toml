@@ -1,0 +1,29 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "cython",
+    "setuptools",
+    "wheel",
+
+    # Needed to run mypyc, which we only use on CPython builds
+    "mypy; python_implementation=='CPython'",
+    "protobuf; python_implementation=='CPython'",
+    "types-protobuf; python_implementation=='CPython'",
+]
+
+[tool.black]
+extend-exclude = ".*_pb2.py" # exclude generated files
+
+[tool.isort]
+profile = "black"
+extend_skip_glob = ["src/flatrtree/internal/*"]
+skip_gitignore = true
+
+[tool.cibuildwheel]
+test-command = "pytest {package}"
+test-extras = ["test"]
+
+# Support Universal2 for Apple Silicon
+[tool.cibuildwheel.macos]
+archs = ["auto", "universal2"]
+test-skip = ["*universal2:arm64"]

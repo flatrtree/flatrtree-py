@@ -1,0 +1,13 @@
+*.c
+*.cpp
+*.egg-info
+*.ipynb
+*.so
+.ipynb_checkpoints
+.ipynb_checkpoints
+.mypy_cache
+.pytest_cache
+__pycache__
+build
+dist
+venv
