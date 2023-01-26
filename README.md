@@ -9,7 +9,7 @@ Flatrtree is a serialization format and set of libraries for reading and writing
 ## Installation
 
 ```console
-$ pip install --pre flatrtree
+$ pip install flatrtree
 ```
 
 ## Usage

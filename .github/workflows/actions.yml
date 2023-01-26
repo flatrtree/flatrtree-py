@@ -61,6 +61,7 @@ jobs:
           path: dist/*.whl
 
   publish_pypi:
+    name: Publish to PyPi
     needs: [build_sdist, build_wheels]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
