@@ -1,4 +1,32 @@
-from flatrtree.rtree import RTree
+from typing import Callable, Iterator, List, Optional, Tuple
+
+DEFAULT_DEGREE: int
+
+class RTree:
+    def __init__(self, count: int, refs: List[int], boxes: List[float]): ...
+    def search(
+        self, minx: float, miny: float, maxx: float, maxy: float
+    ) -> Iterator[int]: ...
+    def neighbors(
+        self,
+        x: float,
+        y: float,
+        box_dist: Callable[
+            # x, y, minx, miny, maxx, maxy
+            [float, float, float, float, float, float],
+            float,  # dist
+        ],
+        item_dist: Optional[
+            Callable[
+                # x, y, ref
+                [float, float, int],
+                float,  # dist
+            ]
+        ] = None,
+    ) -> Iterator[Tuple[int, float]]: ...
+
+def serialize(rtree: RTree, precision: int) -> bytes: ...
+def deserialize(data: bytes) -> RTree: ...
 
 class HilbertBuilder:
     def add(self, ref: int, minx: float, miny: float, maxx: float, maxy: float): ...

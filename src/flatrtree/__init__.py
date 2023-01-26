@@ -4,7 +4,7 @@ from flatrtree.omt_builder import OMTBuilder
 from flatrtree.rtree import RTree
 from flatrtree.serialization import deserialize, serialize
 
-DEFAULT_DEGREE = 8
+DEFAULT_DEGREE: int = 8
 
 __all__ = [
     "RTree",
