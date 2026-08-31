@@ -1,1 +1,1 @@
-recursive-include src *.pyi py.typed
+recursive-include src *.pyx *.pyi *.h py.typed
