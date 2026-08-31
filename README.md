@@ -12,6 +12,11 @@ Flatrtree is a serialization format and set of libraries for reading and writing
 $ pip install flatrtree
 ```
 
+Flatrtree requires Python 3.9 or newer. Prebuilt Linux wheels target
+glibc 2.28+ (`manylinux_2_28`) or musl 1.2+ and are published for x86-64 and
+ARM64 only. On other Linux systems, `pip` builds Flatrtree from source,
+which requires a C and C++ compiler.
+
 ## Usage
 
 Flatrtree separates building and querying behavior. The builder doesn’t know how to query an index and the index doesn’t know how it was built. This is inspired by [FlatBuffers](https://google.github.io/flatbuffers/).
