@@ -3,15 +3,23 @@ name: Actions
 on:
   pull_request:
   push:
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
+
+# Cancel superseded PR runs; runs for other events queue per ref instead
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   run_tests:
     name: Test Python
     strategy:
       matrix:
+        # When adding 3.15, also update the setup-python pin in build_sdist
+        # and the cp315-* skip in pyproject.toml
         python-version: ["3.14", "3.13", "3.12", "3.11", "3.10", "3.9"]
     runs-on: ubuntu-latest
     steps:
@@ -33,18 +41,28 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          # Keep this pinned until Cython and mypyc support Python 3.15
+          # Keep this pinned until Cython and mypyc support Python 3.15,
+          # then also update the run_tests matrix and the cp315-* skip in
+          # pyproject.toml
           python-version: "3.14"
-      - run: pipx run build --sdist --outdir=dist/ .
+      # Build with the pinned interpreter (pipx would run build under the
+      # runner's system Python)
+      - run: pip install build
+      - run: python -m build --sdist --outdir=dist/ .
       - run: pipx run twine check dist/*
       # Installing from the sdist catches missing source files (see issue #1)
-      - run: pip install dist/*.tar.gz
-      - run: pip install pytest pytest-subtests
-      - run: pytest tests/
+      - run: pip install "$(echo dist/*.tar.gz)[test]"
+      - run: python -c "import pathlib, flatrtree; pkg = pathlib.Path(flatrtree.__file__).parent; assert (pkg / 'py.typed').is_file() and (pkg / '__init__.pyi').is_file(), 'type metadata missing from installed package'"
+      # Run the tests shipped in the sdist, not the checkout, so missing
+      # test files fail here too
+      - run: tar -xf dist/*.tar.gz -C "$RUNNER_TEMP"
+      - run: cd "$RUNNER_TEMP"/flatrtree-*/ && pytest tests/
       - uses: actions/upload-artifact@v7
         with:
           name: sdist
           path: dist/*.tar.gz
+          # Let re-runs of this job replace the artifact
+          overwrite: true
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -65,6 +83,8 @@ jobs:
         with:
           name: wheels-${{ matrix.os }}
           path: dist/*.whl
+          # Let re-runs of this job replace the artifact
+          overwrite: true
 
   publish_pypi:
     name: Publish to PyPi
@@ -75,8 +95,15 @@ jobs:
       # Required for PyPI trusted publishing (OIDC)
       id-token: write
     steps:
+      # Download only the dist artifacts; a stray future artifact swept
+      # into dist/ would abort the upload
       - uses: actions/download-artifact@v8
         with:
+          name: sdist
+          path: dist
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: wheels-*
           path: dist
           merge-multiple: true
       - uses: pypa/gh-action-pypi-publish@v1.14.2

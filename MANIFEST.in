@@ -1,1 +1,2 @@
 recursive-include src *.pyx *.pyi *.h py.typed
+recursive-include tests *.py
