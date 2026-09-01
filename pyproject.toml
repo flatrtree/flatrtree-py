@@ -22,12 +22,18 @@ skip_gitignore = true
 [tool.cibuildwheel]
 test-command = "pytest {package}"
 test-extras = ["test"]
-# PyPy wheels are opt-in since cibuildwheel 3.0
+# PyPy wheels are opt-in since cibuildwheel 3.0. This builds wheels for
+# non-EOL PyPy only (3.11 today), narrower than the pp37-pp39 wheels
+# shipped with 1.0.0rc2.
 enable = ["pypy"]
-# cp31?t: mypyc doesn't support free-threaded CPython
-# cp315: 3.15 is still at rc1; unskip once Cython/mypyc support it
+# cp31?t: no free-threaded wheels yet; sdist installs on free-threaded
+#   CPython skip mypyc instead (see setup.py)
+# cp315: 3.15 is still at rc1; unskip once Cython/mypyc support it, then
+#   also update the run_tests matrix and the setup-python pin in
+#   .github/workflows/actions.yml
 skip = ["cp31?t-*", "cp315-*"]
 
-# Build native Apple Silicon and Intel wheels, plus Universal2 CPython wheels
+# Build native Apple Silicon wheels plus Intel wheels for older Macs. pip
+# always prefers these thin wheels, so universal2 is deliberately not built.
 [tool.cibuildwheel.macos]
-archs = ["auto", "x86_64", "universal2"]
+archs = ["auto", "x86_64"]

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import platform
+import sysconfig
 
 from Cython.Build import cythonize
 from setuptools import Extension, setup
-
 
 ext_modules = cythonize(
     [
@@ -29,8 +29,11 @@ ext_modules = cythonize(
     compiler_directives={"language_level": 3},
 )
 
-if platform.python_implementation() == "CPython":
-    # Only run mypyc on CPython, not PyPy, etc.
+if platform.python_implementation() == "CPython" and not sysconfig.get_config_var(
+    "Py_GIL_DISABLED"
+):
+    # Only run mypyc on CPython, not PyPy, etc. Free-threaded builds also
+    # skip mypyc, matching the cp31?t-* wheel skip in pyproject.toml.
     from mypyc.build import mypycify
 
     ext_modules += mypycify(

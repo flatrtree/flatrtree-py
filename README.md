@@ -14,8 +14,10 @@ $ pip install flatrtree
 
 Flatrtree requires Python 3.9 or newer. Prebuilt Linux wheels target
 glibc 2.28+ (`manylinux_2_28`) or musl 1.2+ and are published for x86-64 and
-ARM64 only. On other Linux systems, `pip` builds Flatrtree from source,
-which requires a C and C++ compiler.
+ARM64 only. Windows wheels are 64-bit only, and PyPy wheels are built for
+PyPy 3.11 only. On other systems, `pip` builds Flatrtree from source, which
+requires a C and C++ compiler and the Python development headers (commonly
+packaged as `python3-dev` or `python3-devel`).
 
 ## Usage
 
